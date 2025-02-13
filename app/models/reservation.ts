@@ -8,6 +8,7 @@ export default class Reservation extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
+  @column()
   declare clientId: number
 
   @column()
