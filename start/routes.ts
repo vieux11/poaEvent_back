@@ -30,6 +30,8 @@ router.group(() => {
 //event route groupe
 
 router.get('/events', [EventsController, 'index'])
+// Route pour obtenir le nombre de places restantes pour un événement
+router.get('/event/:eventId/remainingSeats', [EventsController, 'getRemainingSeats'])
 // Création des events
 router
   .post('/createEvent', [EventsController, 'store'])

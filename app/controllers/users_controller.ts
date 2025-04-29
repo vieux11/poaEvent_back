@@ -42,8 +42,8 @@ export default class UsersController {
    * Déconnexion de l'utilisateur (supprime uniquement le token actuel)
    */
   public async logout({ auth }: HttpContext) {
-    const user = auth.getUserOrFail()
     const authResult = await auth.authenticate()
+    const user = authResult
     const token = authResult.currentAccessToken
     await User.accessTokens.delete(user, token?.identifier)
 

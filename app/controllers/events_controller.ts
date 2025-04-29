@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Event from '#models/event'
+import Reservation from '#models/reservation'
 export default class EventsController {
   /**
    * Créer un événement (admin uniquement)
@@ -44,6 +45,8 @@ export default class EventsController {
       location: event.location,
       eventDate: event.eventDate,
       image: event.image,
+      heure: event.heure,
+      maxParticipants: event.maxParticipants,
       adminId: event.adminId,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
@@ -73,6 +76,8 @@ export default class EventsController {
       location: event.location,
       eventDate: event.eventDate,
       image: event.image,
+      heure: event.heure,
+      maxParticipants: event.maxParticipants,
       adminId: event.adminId,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
@@ -81,4 +86,22 @@ export default class EventsController {
 
     return response.ok(result)
   }
+
+  public async getRemainingSeats({ params, response }: HttpContext) {
+    const eventId = params.eventId
+
+    // Récupérer l'événement
+    const event = await Event.find(eventId)
+    if (!event) {
+      return response.notFound({ message: 'Event not found' })
+    }
+
+    // Calculer le nombre de places restantes
+    const totalReservationsResult = await Reservation.query().where('eventId', eventId).count('* as total')
+    const totalReservations = Number(totalReservationsResult[0]?.$extras.total) || 0
+    const remainingSeats = event.maxParticipants - totalReservations
+
+    return response.ok({ remainingSeats, totalReservations })
+  }
+
 }

@@ -33,7 +33,7 @@ export default class Reservation extends BaseModel {
   @beforeCreate()
   public static generateCoupon(reservation: Reservation) {
     if (!reservation.coupon) {
-      reservation.coupon = Reservation.generateRandomCoupon(10)
+      reservation.coupon = Reservation.generateRandomCoupon(5)
     }
   }
   // Fonction utilitaire pour générer un coupon aléatoire d'une longueur donnée

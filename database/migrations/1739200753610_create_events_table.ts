@@ -9,6 +9,8 @@ export default class extends BaseSchema {
       table.string('title').notNullable()
       table.text('description')
       table.string('location').notNullable()
+      table.dateTime('heure').notNullable() // Ajout de la colonne heure
+      table.integer('max_participants').notNullable().defaultTo(0) // Ajout de la colonne maxParticipants
       table.dateTime('event_date').notNullable()
       table.string('image').nullable()
       // Ajout de la clé étrangère admin_id pour l'admin qui crée l'événement
