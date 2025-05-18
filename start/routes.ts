@@ -43,7 +43,7 @@ router
 router.group(() => {
   // Création d'une réservation (client uniquement)
   router.post('/createReservation', [ReservationsController, 'store'])
-  // .use([middleware.auth({ guards: ['api'] })])
+    .use([middleware.auth({ guards: ['api'] })])
   // Récupérer les réservations du client authentifié
   router.get('/getMyReservations', [ReservationsController, 'getMyReservations'])
     .use([middleware.auth({ guards: ['api'] })])
