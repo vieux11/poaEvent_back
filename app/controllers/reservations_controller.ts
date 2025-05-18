@@ -68,24 +68,43 @@ export default class ReservationsController {
       return response.unauthorized({ message: 'Accès réservé aux clients' })
     }
 
-    // Récupérer l'id de l'événement à réserver depuis le corps de la requête
     const { eventId } = request.only(['eventId'])
 
-    // Optionnel : Vérifier que l'événement existe
     const event = await Event.find(eventId)
     if (!event) {
       return response.notFound({ message: 'Événement non trouvé' })
     }
-    // Créer la réservation (le hook beforeCreate générera automatiquement le coupon)
+
+    // Vérifier si l'événement a encore des places disponibles
+    const currentReservationsCount = await Reservation.query()
+      .where('event_id', eventId)
+      .count('* as total')
+
+    const totalReservations = Number(currentReservationsCount[0].$extras.total)
+
+    if (totalReservations >= event.maxParticipants) {
+      return response.badRequest({ message: 'Cet événement est complet. Aucune réservation possible.' })
+    }
+
+    // Vérifier si l'utilisateur a déjà réservé cet événement
+    const alreadyReserved = await Reservation.query()
+      .where('client_id', user.id)
+      .andWhere('event_id', eventId)
+      .first()
+
+    if (alreadyReserved) {
+      return response.badRequest({ message: 'Vous avez déjà réservé une place pour cet événement.' })
+    }
+
+    // Créer la réservation
     const reservation = await Reservation.create({
       clientId: user.id,
       eventId: eventId,
     })
-    // Charger les relations pour accéder aux infos de l'événement et du client
+
     await reservation.load('event')
     await reservation.load('client')
 
-    // Renvoie un objet formaté contenant le titre et la date de l'événement et le nom complet du client
     return response.created({
       id: reservation.id,
       eventTitle: reservation.event.title,
