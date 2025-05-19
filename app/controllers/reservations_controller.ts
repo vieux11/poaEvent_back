@@ -26,6 +26,7 @@ export default class ReservationsController {
       clientName: reservation.client.fullName, // Nom du client
       eventTitle: reservation.event.title, // Titre de l'événement
       eventDate: reservation.event.eventDate,
+      eventTime: reservation.event.heure,
       eventLocation: reservation.event.location,
       coupon: reservation.coupon,
       createdAt: reservation.createdAt,
