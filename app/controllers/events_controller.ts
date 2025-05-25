@@ -104,4 +104,37 @@ export default class EventsController {
     return response.ok({ remainingSeats, totalReservations })
   }
 
+  // Récupérer les réservations pour le tableau de bord de l'admin
+  public async dashboard({ params, auth, response }: HttpContext) {
+    const user = auth.user!
+
+    const event = await Event.query()
+      .where('id', params.id)
+      .andWhere('adminId', user.id)
+      .preload('reservations', (reservationQuery) => {
+        reservationQuery.preload('client')
+      })
+      .first()
+
+    if (!event) {
+      return response.unauthorized({ message: 'Accès interdit ou événement introuvable' })
+    }
+
+    const totalPlaces = event.maxParticipants
+    const reservedCount = event.reservations.length
+    const availablePlaces = totalPlaces - reservedCount
+
+    const reservationList = event.reservations.map((res) => ({
+      clientName: res.client.fullName,
+      coupon: res.coupon,
+    }))
+
+    return {
+      eventTitle: event.title,
+      totalPlaces,
+      reservedCount,
+      availablePlaces,
+      reservationList,
+    }
+  }
 }

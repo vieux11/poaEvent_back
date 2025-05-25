@@ -48,6 +48,6 @@ router.group(() => {
   router.get('/getMyReservations', [ReservationsController, 'getMyReservations'])
     .use([middleware.auth({ guards: ['api'] })])
   // Récupérer toutes les réservations (admin uniquement)
-  router.get('/getAllReservations', [ReservationsController, 'getAllReservations'])
+  router.get('/events/:id/reservations-dashboard', [EventsController, 'dashboard'])
     .use([middleware.auth({ guards: ['api'] }), middleware.isAdmin()])
 })
