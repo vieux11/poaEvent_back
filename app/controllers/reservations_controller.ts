@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
-import Reservation from "#models/reservation"
+import Reservation from '#models/reservation'
 import Event from '#models/event'
 
 export default class ReservationsController {
@@ -84,7 +84,9 @@ export default class ReservationsController {
     const totalReservations = Number(currentReservationsCount[0].$extras.total)
 
     if (totalReservations >= event.maxParticipants) {
-      return response.badRequest({ message: 'Cet événement est complet. Aucune réservation possible.' })
+      return response.badRequest({
+        message: 'Cet événement est complet. Aucune réservation possible.',
+      })
     }
 
     // Vérifier si l'utilisateur a déjà réservé cet événement
@@ -94,7 +96,9 @@ export default class ReservationsController {
       .first()
 
     if (alreadyReserved) {
-      return response.badRequest({ message: 'Vous avez déjà réservé une place pour cet événement.' })
+      return response.badRequest({
+        message: 'Vous avez déjà réservé une place pour cet événement.',
+      })
     }
 
     // Créer la réservation

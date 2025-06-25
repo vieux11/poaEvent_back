@@ -22,10 +22,10 @@ export default class Event extends BaseModel {
 
   @column.dateTime()
   declare heure: DateTime // Nouvelle colonne pour l'heure de la réservation
-  
+
   @column()
   declare maxParticipants: number // Nouvelle colonne pour le nombre maximum de participants
-  
+
   @column()
   declare image: string
 

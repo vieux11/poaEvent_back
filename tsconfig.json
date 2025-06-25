@@ -2,6 +2,8 @@
   "extends": "@adonisjs/tsconfig/tsconfig.app.json",
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./build"
+    "outDir": "./build",
+    "types": ["multer"],
+    "typeRoots": ["./node_modules/@types", "./contracts"]
   }
 }

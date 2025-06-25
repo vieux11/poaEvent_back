@@ -42,12 +42,15 @@ router
   .use([middleware.auth({ guards: ['api'] }), middleware.isAdmin()])
 router.group(() => {
   // Création d'une réservation (client uniquement)
-  router.post('/createReservation', [ReservationsController, 'store'])
+  router
+    .post('/createReservation', [ReservationsController, 'store'])
     .use([middleware.auth({ guards: ['api'] })])
   // Récupérer les réservations du client authentifié
-  router.get('/getMyReservations', [ReservationsController, 'getMyReservations'])
+  router
+    .get('/getMyReservations', [ReservationsController, 'getMyReservations'])
     .use([middleware.auth({ guards: ['api'] })])
   // Récupérer toutes les réservations (admin uniquement)
-  router.get('/events/:id/reservations-dashboard', [EventsController, 'dashboard'])
+  router
+    .get('/events/:id/reservations-dashboard', [EventsController, 'dashboard'])
     .use([middleware.auth({ guards: ['api'] }), middleware.isAdmin()])
 })

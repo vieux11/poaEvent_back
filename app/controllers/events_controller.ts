@@ -1,6 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Event from '#models/event'
 import Reservation from '#models/reservation'
+import fs from 'node:fs'
+import cloudinary from '#config/cloudinary'
+
 export default class EventsController {
   /**
    * Créer un événement (admin uniquement)
@@ -12,9 +15,46 @@ export default class EventsController {
       return response.unauthorized({ message: 'Accès réservé aux administrateurs' })
     }
 
-    const data = request.all()
-    const event = await Event.create({ ...data, adminId: user.id })
-    //  Charger le fullName de l'admin
+    const imageFile = request.file('image', {
+      extnames: ['jpg', 'jpeg', 'png'],
+      size: '2mb', // facultatif : limite la taille à 2 Mo
+    }) // 'image' correspond au champ du formulaire
+
+    if (!imageFile) {
+      return response.badRequest({ message: 'Image manquante' })
+    }
+    if (imageFile.hasErrors) {
+      return response.badRequest({
+        message: 'Fichier invalide',
+        errors: imageFile.errors,
+      })
+    }
+
+    // Sauvegarde temporaire
+    const tmpPath = imageFile.tmpPath!
+    // Upload vers Cloudinary
+    const uploadResult = await cloudinary.uploader.upload(tmpPath, {
+      folder: 'events', // nom du dossier cloudinary
+    })
+
+    // Supprimer fichier temporaire si besoin (optionnel)
+    fs.unlinkSync(tmpPath)
+
+    const data = request.only([
+      'title',
+      'description',
+      'location',
+      'eventDate',
+      'heure',
+      'maxParticipants',
+    ])
+
+    const event = await Event.create({
+      ...data,
+      image: uploadResult.secure_url,
+      adminId: user.id,
+    })
+
     await event.load('admin')
 
     return response.created({
@@ -25,12 +65,12 @@ export default class EventsController {
       eventDate: event.eventDate,
       image: event.image,
       adminId: event.adminId,
+      heure: event.heure,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
-      adminFullName: event.admin.fullName, // ✅ Inclure uniquement fullName
+      adminFullName: event.admin.fullName,
     })
   }
-
   /**
    * Récupérer tous les événements
    */
@@ -97,7 +137,9 @@ export default class EventsController {
     }
 
     // Calculer le nombre de places restantes
-    const totalReservationsResult = await Reservation.query().where('eventId', eventId).count('* as total')
+    const totalReservationsResult = await Reservation.query()
+      .where('eventId', eventId)
+      .count('* as total')
     const totalReservations = Number(totalReservationsResult[0]?.$extras.total) || 0
     const remainingSeats = event.maxParticipants - totalReservations
 
