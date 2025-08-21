@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Socket Test</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 20px; }
+      pre { background: #111; color: #0f0; padding: 12px; border-radius: 6px; max-height: 50vh; overflow: auto; }
+      input, button { padding: 8px; margin-right: 8px; }
+    </style>
+  </head>
+  <body>
+    <h1>Socket.IO - Reservation Live</h1>
+    <div>
+      <input id="eventId" placeholder="Event ID (optional room)" />
+      <button id="joinBtn">Join Event Room</button>
+    </div>
+    <h3>Incoming events</h3>
+    <pre id="log"></pre>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const logEl = document.getElementById('log')
+      function append(msg) {
+        logEl.textContent += `\n${new Date().toISOString()} | ${msg}`
+        logEl.scrollTop = logEl.scrollHeight
+      }
+
+      const socket = io()
+      socket.on('connect', () => append('connected: ' + socket.id))
+      socket.on('reservation-created', (payload) => append('reservation-created ' + JSON.stringify(payload)))
+      socket.on('disconnect', () => append('disconnected'))
+
+      document.getElementById('joinBtn').addEventListener('click', () => {
+        const eventId = document.getElementById('eventId').value.trim()
+        if (eventId) {
+          socket.emit('join-event-room', eventId)
+          append('joined room event:' + eventId)
+        }
+      })
+    </script>
+  </body>
+  </html>
+
+
+
+
