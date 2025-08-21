@@ -1,0 +1,60 @@
+name: CI/CD Docker Build & Push
+
+# 🔹 Déclencheurs
+on:
+  push:
+    branches:
+      - main        # Se déclenche sur push sur main
+  workflow_dispatch: # Permet un déclenchement manuel
+
+# 🔹 Variables globales
+env:
+  DOCKERHUB_REPO: vieuxsage/poa-app
+  SOCKET_IMAGE_TAG: socket-server
+  ADONIS_IMAGE_TAG: adonis-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout du code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Login Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # 3️⃣ Définir des tags dynamiques basés sur commit SHA
+      - name: Set Docker tags
+        run: |
+          echo "SOCKET_TAG=${{ env.SOCKET_IMAGE_TAG }}-${GITHUB_SHA::8}" >> $GITHUB_ENV
+          echo "ADONIS_TAG=${{ env.ADONIS_IMAGE_TAG }}-${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      # 4️⃣ Build & Push Socket server
+      - name: Build and push Socket Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./socket-server
+          file: ./socket-server/Dockerfile
+          push: true
+          tags: ${{ env.DOCKERHUB_REPO }}:${{ env.SOCKET_TAG }}
+
+      # 5️⃣ Build & Push Adonis app
+      - name: Build and push Adonis Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.DOCKERHUB_REPO }}:${{ env.ADONIS_TAG }}
+
+      # 6️⃣ Affichage des images créées
+      - name: Show pushed Docker images
+        run: |
+          echo "Socket image: ${{ env.DOCKERHUB_REPO }}:${{ env.SOCKET_TAG }}"
+          echo "Adonis image: ${{ env.DOCKERHUB_REPO }}:${{ env.ADONIS_TAG }}"
