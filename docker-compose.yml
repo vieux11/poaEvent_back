@@ -1,0 +1,17 @@
+services:
+  adonis-app:
+    build: .
+    container_name: adonis-app
+    restart: always
+    ports:
+      - "3333:3333"
+    env_file:
+      - .env
+  socket-server:
+    build:
+      context: ./socket-server
+      dockerfile: Dockerfile
+    container_name: socket-server
+    restart: always
+    ports:
+      - "5050:5050"
