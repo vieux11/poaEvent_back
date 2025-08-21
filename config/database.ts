@@ -1,6 +1,11 @@
 import env from '#start/env'
 import { defineConfig } from '@adonisjs/lucid'
-
+console.log({
+  host: env.get('PG_HOST'),
+  user: env.get('PG_USER'),
+  database: env.get('PG_DB_NAME'),
+  ssl: false,
+})
 const dbConfig = defineConfig({
   connection: env.get('DB_CONNECTION', 'pg'), // Définit pg comme valeur par défaut
   connections: {
@@ -27,7 +32,9 @@ const dbConfig = defineConfig({
         user: env.get('PG_USER'),
         password: env.get('PG_PASSWORD'),
         database: env.get('PG_DB_NAME'),
-        ssl: { rejectUnauthorized: false }, // <-- Ajoutez cette ligne
+        ssl: {
+          rejectUnauthorized: false, // AWS RDS a besoin de cette option si tu n’utilises pas le certificat CA
+        },
       },
       migrations: {
         naturalSort: true,
