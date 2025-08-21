@@ -1,6 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Event from '#models/event'
-import Reservation from '#models/reservation'
 import fs from 'node:fs'
 import cloudinary from '#config/cloudinary'
 
@@ -137,11 +136,8 @@ export default class EventsController {
     }
 
     // Calculer le nombre de places restantes
-    const totalReservationsResult = await Reservation.query()
-      .where('eventId', eventId)
-      .count('* as total')
-    const totalReservations = Number(totalReservationsResult[0]?.$extras.total) || 0
-    const remainingSeats = event.maxParticipants - totalReservations
+    const remainingSeats = await event.refreshRemainingSeats()
+    const totalReservations = event.maxParticipants - remainingSeats
 
     return response.ok({ remainingSeats, totalReservations })
   }
