@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 
 import Reservation from '#models/reservation'
 import Event from '#models/event'
+import env from '#start/env'
 
 export default class ReservationsController {
   /**
@@ -76,14 +77,9 @@ export default class ReservationsController {
       return response.notFound({ message: 'Événement non trouvé' })
     }
 
-    // Vérifier si l'événement a encore des places disponibles
-    const currentReservationsCount = await Reservation.query()
-      .where('event_id', eventId)
-      .count('* as total')
-
-    const totalReservations = Number(currentReservationsCount[0].$extras.total)
-
-    if (totalReservations >= event.maxParticipants) {
+    // Vérifier les places disponibles AVANT de créer la réservation
+    const remainingSeatsBefore = await event.refreshRemainingSeats()
+    if (remainingSeatsBefore <= 0) {
       return response.badRequest({
         message: 'Cet événement est complet. Aucune réservation possible.',
       })
@@ -110,6 +106,33 @@ export default class ReservationsController {
     await reservation.load('event')
     await reservation.load('client')
 
+    // Recalculate remaining seats after creation
+    const remainingSeatsAfter = await event.refreshRemainingSeats()
+    // Fire-and-forget notification to Socket server (if configured)
+    const socketServerUrl = env.get('SOCKET_SERVER_URL')
+    if (socketServerUrl) {
+      try {
+        // Node 18+ has global fetch
+        await fetch(`${socketServerUrl}/broadcast/reservation-created`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reservationId: reservation.id,
+            eventId: reservation.eventId,
+            eventTitle: reservation.event.title,
+            eventDate: reservation.event.eventDate,
+            eventLocation: reservation.event.location,
+            clientName: reservation.client.fullName,
+            coupon: reservation.coupon,
+            createdAt: reservation.createdAt,
+            remainingSeats: remainingSeatsAfter,
+          }),
+        })
+      } catch (error) {
+        // Do not block the response if the socket bridge is down
+      }
+    }
+
     return response.created({
       id: reservation.id,
       eventTitle: reservation.event.title,
@@ -118,6 +141,7 @@ export default class ReservationsController {
       clientName: reservation.client.fullName,
       coupon: reservation.coupon,
       createdAt: reservation.createdAt,
+      remainingSeats: remainingSeatsAfter,
     })
   }
 }
